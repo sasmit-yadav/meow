@@ -1,0 +1,37 @@
+:root {
+  font-family: system-ui, sans-serif;
+  font-size: 15px;
+  color: #7a7a7a;
+  background: #000;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  -webkit-touch-callout: none;
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+textarea {
+  resize: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+::selection {
+  background: #1a1a1a;
+}
