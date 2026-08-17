@@ -1110,3 +1110,373 @@
   background: #c8c8c8;
   color: #000;
 }
+
+.safari {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #1c1c1e;
+  color: #f5f5f7;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", sans-serif;
+  user-select: none;
+  overflow: hidden;
+}
+
+.safari-chrome {
+  height: 52px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px 0 16px;
+  background: rgba(40, 40, 42, 0.94);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.safari-lights {
+  display: flex;
+  gap: 8px;
+  margin-right: 8px;
+}
+
+.safari-lights i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: block;
+}
+
+.safari-lights .close {
+  background: #ff5f57;
+}
+
+.safari-lights .min {
+  background: #febc2e;
+}
+
+.safari-lights .max {
+  background: #28c840;
+}
+
+.safari-tool {
+  width: 18px;
+  height: 18px;
+  stroke: #c7c7cc;
+  fill: none;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+
+.safari-tool.dim {
+  stroke: #6e6e73;
+}
+
+.safari-omnibox {
+  flex: 1;
+  max-width: 640px;
+  margin: 0 auto;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.safari-omnibox svg {
+  width: 13px;
+  height: 13px;
+  stroke: #8e8e93;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  flex: none;
+}
+
+.safari-omnibox-field {
+  flex: 1;
+  position: relative;
+  height: 100%;
+}
+
+.safari-omnibox-field span {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #8e8e93;
+  font-size: 13px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.safari-omnibox-field textarea {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 6px 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  font: inherit;
+}
+
+.safari-omnibox-field textarea::selection {
+  background: transparent;
+  color: transparent;
+}
+
+.safari-tabs {
+  height: 36px;
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 0 12px;
+  background: #232326;
+}
+
+.safari-tab {
+  height: 28px;
+  min-width: 160px;
+  padding: 0 12px;
+  border-radius: 8px 8px 0 0;
+  background: #2e2e32;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #d1d1d6;
+}
+
+.safari-tab.on {
+  background: #3a3a3e;
+  color: #fff;
+}
+
+.safari-tab b {
+  font-weight: 400;
+  color: #8e8e93;
+}
+
+.safari-tab-add {
+  color: #8e8e93;
+  font-size: 18px;
+  padding: 0 8px 6px;
+}
+
+.safari-page {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: auto;
+}
+
+.safari-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 12% 18%, rgba(214, 92, 138, 0.55), transparent 42%),
+    radial-gradient(ellipse at 82% 8%, rgba(72, 118, 214, 0.5), transparent 40%),
+    radial-gradient(ellipse at 78% 78%, rgba(232, 154, 72, 0.42), transparent 46%),
+    radial-gradient(ellipse at 8% 82%, rgba(48, 110, 148, 0.45), transparent 44%),
+    #1a1a28;
+}
+
+.safari-content {
+  position: relative;
+  z-index: 1;
+  width: min(920px, calc(100% - 64px));
+  margin: 36px auto 72px;
+}
+
+.safari-content h2 {
+  margin: 0 0 16px;
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.4px;
+}
+
+.safari-faves {
+  display: flex;
+  gap: 22px;
+  margin-bottom: 36px;
+  flex-wrap: wrap;
+}
+
+.safari-fave {
+  width: 76px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.safari-fave-icon {
+  width: 74px;
+  height: 74px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+}
+
+.safari-fave-icon img {
+  width: 32px;
+  height: 32px;
+}
+
+.safari-fave span {
+  font-size: 11px;
+  color: #f2f2f7;
+  text-align: center;
+  max-width: 76px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.safari-freq {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 36px;
+}
+
+.safari-freq-card {
+  border-radius: 14px;
+  background: rgba(44, 44, 48, 0.72);
+  overflow: hidden;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.safari-freq-top {
+  height: 88px;
+  background: rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px;
+}
+
+.safari-freq-top img {
+  width: 16px;
+  height: 16px;
+}
+
+.safari-freq-top span {
+  font-size: 11px;
+  color: #aeaeb2;
+}
+
+.safari-freq-card p {
+  margin: 0;
+  padding: 10px 12px 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.safari-row {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 14px;
+}
+
+.safari-privacy,
+.safari-read {
+  border-radius: 16px;
+  background: rgba(44, 44, 48, 0.72);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  padding: 18px 18px 16px;
+}
+
+.safari-privacy strong,
+.safari-read strong {
+  display: block;
+  font-size: 13px;
+  color: #d1d1d6;
+  font-weight: 650;
+  margin-bottom: 8px;
+}
+
+.safari-privacy em {
+  font-style: normal;
+  font-size: 56px;
+  font-weight: 700;
+  letter-spacing: -2px;
+  line-height: 1;
+  display: block;
+  margin: 8px 0 10px;
+}
+
+.safari-privacy p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #e5e5ea;
+}
+
+.safari-read-item {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.safari-read-item img {
+  width: 18px;
+  height: 18px;
+}
+
+.safari-read-item p {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.safari-read-item span {
+  font-size: 11px;
+  color: #8e8e93;
+}
+
+.safari-edit {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(58, 58, 62, 0.92);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.safari-edit svg {
+  width: 18px;
+  height: 18px;
+  stroke: #f2f2f7;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+@media (max-width: 800px) {
+  .safari-freq,
+  .safari-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}

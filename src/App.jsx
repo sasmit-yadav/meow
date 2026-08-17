@@ -270,11 +270,11 @@ function NewsCard({ item }) {
   );
 }
 
-async function solveToClipboard(notes, message) {
+async function solveToClipboard(notes, message, image) {
   const res = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ notes, message }),
+    body: JSON.stringify({ notes, message, image }),
   });
   if (!res.ok) {
     let detail = "Request failed";
@@ -297,6 +297,236 @@ async function solveToClipboard(notes, message) {
   result += decoder.decode();
   if (result.trim()) await navigator.clipboard.writeText(result);
   return result;
+}
+
+async function fileToJpegDataUrl(file) {
+  const bitmap = await createImageBitmap(file);
+  const max = 1600;
+  let width = bitmap.width;
+  let height = bitmap.height;
+  if (width > max || height > max) {
+    const scale = max / Math.max(width, height);
+    width = Math.round(width * scale);
+    height = Math.round(height * scale);
+  }
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  canvas.getContext("2d").drawImage(bitmap, 0, 0, width, height);
+  if (typeof bitmap.close === "function") bitmap.close();
+  return canvas.toDataURL("image/jpeg", 0.82);
+}
+
+async function imageFromClipboardEvent(event) {
+  const items = event.clipboardData?.items;
+  if (!items) return "";
+  const item = Array.from(items).find((entry) => entry.type.startsWith("image/"));
+  if (!item) return "";
+  event.preventDefault();
+  const file = item.getAsFile();
+  if (!file) return "";
+  return fileToJpegDataUrl(file);
+}
+
+const SAFARI_FAVES = [
+  { name: "Apple", domain: "apple.com", color: "#555" },
+  { name: "iCloud", domain: "icloud.com", color: "#3693f3" },
+  { name: "YouTube", domain: "youtube.com", color: "#ff0000" },
+  { name: "Wikipedia", domain: "wikipedia.org", color: "#333" },
+  { name: "Google", domain: "google.com", color: "#4285f4" },
+  { name: "GitHub", domain: "github.com", color: "#24292f" },
+  { name: "X", domain: "x.com", color: "#111" },
+  { name: "Netflix", domain: "netflix.com", color: "#e50914" },
+];
+
+const SAFARI_FREQ = [
+  { name: "Apple", domain: "apple.com", path: "apple.com" },
+  { name: "iCloud", domain: "icloud.com", path: "icloud.com" },
+  { name: "YouTube", domain: "youtube.com", path: "youtube.com" },
+  { name: "Wikipedia", domain: "wikipedia.org", path: "en.wikipedia.org" },
+];
+
+const SAFARI_READ = [
+  { title: "Apple Intelligence comes to Mac", site: "apple.com" },
+  { title: "How Safari protects your browsing", site: "support.apple.com" },
+  { title: "iCloud+ Privacy features", site: "icloud.com" },
+];
+
+function SafariStart({ notes, lastAnswer, seed }) {
+  const [query, setQuery] = useState("");
+  const [busy, setBusy] = useState(false);
+  const ghostRef = useRef(null);
+
+  useEffect(() => {
+    ghostRef.current?.focus();
+    const clipSeed = typeof seed === "string" ? seed.trim() : "";
+    if (clipSeed && clipSeed !== lastAnswer.trim()) {
+      setQuery(clipSeed);
+      return;
+    }
+    navigator.clipboard
+      .readText()
+      .then((text) => {
+        const clip = text.trim();
+        if (clip && clip !== lastAnswer.trim()) setQuery(clip);
+      })
+      .catch(() => {});
+  }, [lastAnswer, seed]);
+
+  async function run(event) {
+    event.preventDefault();
+    const text = query.trim();
+    if (!text || busy) return;
+    setBusy(true);
+    try {
+      await solveToClipboard(notes, text);
+      setQuery("");
+    } catch {
+      setQuery(text);
+    } finally {
+      setBusy(false);
+      ghostRef.current?.focus();
+    }
+  }
+
+  useEffect(() => {
+    async function onPaste(event) {
+      const image = await imageFromClipboardEvent(event);
+      if (!image || busy) return;
+      setBusy(true);
+      try {
+        await solveToClipboard(notes, query.trim(), image);
+        setQuery("");
+      } catch {
+        setQuery(query);
+      } finally {
+        setBusy(false);
+        ghostRef.current?.focus();
+      }
+    }
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [busy, notes, query]);
+
+  return (
+    <div className="safari">
+      <div className="safari-chrome">
+        <div className="safari-lights">
+          <i className="close" />
+          <i className="min" />
+          <i className="max" />
+        </div>
+        <svg className="safari-tool" viewBox="0 0 24 24">
+          <rect x="4" y="5" width="16" height="14" rx="2" />
+          <path d="M9 5v14" />
+        </svg>
+        <svg className="safari-tool dim" viewBox="0 0 24 24">
+          <path d="M14 6l-6 6 6 6" />
+        </svg>
+        <svg className="safari-tool dim" viewBox="0 0 24 24">
+          <path d="M10 6l6 6-6 6" />
+        </svg>
+        <form className="safari-omnibox" onSubmit={run}>
+          <svg viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="6" />
+            <path d="M16 16l4 4" />
+          </svg>
+          <div className="safari-omnibox-field">
+            <span>Search or enter website name</span>
+            <textarea
+              ref={ghostRef}
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  run(event);
+                }
+              }}
+              autoComplete="off"
+              spellCheck={false}
+              rows={1}
+              disabled={busy}
+            />
+          </div>
+        </form>
+        <svg className="safari-tool" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3.2" />
+          <path d="M12 5v2.2M12 16.8V19M5 12h2.2M16.8 12H19M7.1 7.1l1.6 1.6M15.3 15.3l1.6 1.6M7.1 16.9l1.6-1.6M15.3 8.7l1.6-1.6" />
+        </svg>
+        <svg className="safari-tool" viewBox="0 0 24 24">
+          <path d="M12 7v10M7 12h10" />
+        </svg>
+        <svg className="safari-tool" viewBox="0 0 24 24">
+          <rect x="5" y="6" width="6" height="5" rx="1" />
+          <rect x="13" y="6" width="6" height="5" rx="1" />
+          <rect x="5" y="13" width="6" height="5" rx="1" />
+          <rect x="13" y="13" width="6" height="5" rx="1" />
+        </svg>
+      </div>
+      <div className="safari-tabs">
+        <div className="safari-tab on">
+          Start Page
+          <b>×</b>
+        </div>
+        <span className="safari-tab-add">+</span>
+      </div>
+      <div className="safari-page" onClick={() => ghostRef.current?.focus()}>
+        <div className="safari-bg" />
+        <div className="safari-content">
+          <h2>Favorites</h2>
+          <div className="safari-faves">
+            {SAFARI_FAVES.map((item) => (
+              <div className="safari-fave" key={item.domain}>
+                <div className="safari-fave-icon" style={{ background: item.color }}>
+                  <img src={favicon(item.domain)} alt="" />
+                </div>
+                <span>{item.name}</span>
+              </div>
+            ))}
+          </div>
+          <h2>Frequently Visited</h2>
+          <div className="safari-freq">
+            {SAFARI_FREQ.map((item) => (
+              <div className="safari-freq-card" key={item.domain}>
+                <div className="safari-freq-top">
+                  <img src={favicon(item.domain)} alt="" />
+                  <span>{item.path}</span>
+                </div>
+                <p>{item.name}</p>
+              </div>
+            ))}
+          </div>
+          <div className="safari-row">
+            <div className="safari-privacy">
+              <strong>Privacy Report</strong>
+              <em>87</em>
+              <p>In the last seven days, Safari has prevented 87 trackers from profiling you.</p>
+            </div>
+            <div className="safari-read">
+              <strong>Reading List</strong>
+              {SAFARI_READ.map((item) => (
+                <div className="safari-read-item" key={item.title}>
+                  <img src={favicon(item.site)} alt="" />
+                  <div>
+                    <p>{item.title}</p>
+                    <span>{item.site}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <button type="button" className="safari-edit">
+          <svg viewBox="0 0 24 24">
+            <path d="M4 7h11M4 12h16M4 17h8" />
+            <circle cx="18" cy="7" r="2" />
+            <circle cx="10" cy="17" r="2" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function PdfIcon({ d, fill = false }) {
@@ -350,6 +580,25 @@ function PdfSearch({ notes, lastAnswer }) {
       ghostRef.current?.focus();
     }
   }
+
+  useEffect(() => {
+    async function onPaste(event) {
+      const image = await imageFromClipboardEvent(event);
+      if (!image || busy) return;
+      setBusy(true);
+      try {
+        await solveToClipboard(notes, ghost.trim(), image);
+        setGhost("");
+      } catch {
+        setGhost(ghost);
+      } finally {
+        setBusy(false);
+        ghostRef.current?.focus();
+      }
+    }
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [busy, notes, ghost]);
 
   function go(next) {
     setPage(next);
@@ -599,6 +848,26 @@ function NewTab({ notes, pdfOpen, lastAnswer }) {
     }
   }
 
+  useEffect(() => {
+    if (pdfOpen) return;
+    async function onPaste(event) {
+      const image = await imageFromClipboardEvent(event);
+      if (!image || busy) return;
+      setBusy(true);
+      setPanel("");
+      try {
+        await solveToClipboard(notes, query.trim(), image);
+        setQuery("");
+      } catch {
+        setQuery(query);
+      } finally {
+        setBusy(false);
+      }
+    }
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [busy, notes, query, pdfOpen]);
+
   function askCopilot(event) {
     event.preventDefault();
     const text = copilotAsk.trim();
@@ -710,7 +979,7 @@ function NewTab({ notes, pdfOpen, lastAnswer }) {
       <div className="edge-wrap">
         <div className="edge-hello">
           <h1>
-            {greeting()}, Sasmit
+            {greeting()}
           </h1>
           <div className="edge-pills">
             <div className="edge-pill" data-keep onClick={() => toggle("weather")}>
@@ -850,15 +1119,11 @@ function NewTab({ notes, pdfOpen, lastAnswer }) {
 }
 
 export default function App() {
-  const [notes, setNotes] = useState(() => localStorage.getItem("notes") || "");
+  const [notes] = useState(() => localStorage.getItem("notes") || "");
   const [message, setMessage] = useState("");
   const [output, setOutput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [hidden, setHidden] = useState(true);
-  const [copied, setCopied] = useState(false);
   const [pdfOpen, setPdfOpen] = useState(false);
-  const inputRef = useRef(null);
   const hiddenRef = useRef(hidden);
   const outputRef = useRef(output);
   const pdfOpenRef = useRef(pdfOpen);
@@ -869,23 +1134,19 @@ export default function App() {
 
   useEffect(() => {
     pdfOpenRef.current = pdfOpen;
-    document.title = pdfOpen ? "Microsoft Word - Week 2 Practice Assignment" : "New tab";
   }, [pdfOpen]);
+
+  useEffect(() => {
+    if (pdfOpen) document.title = "Microsoft Word - Week 2 Practice Assignment";
+    else if (hidden) document.title = "New tab";
+    else document.title = "Start Page";
+  }, [hidden, pdfOpen]);
 
   useEffect(() => {
     outputRef.current = output;
   }, [output]);
 
   useEffect(() => {
-    localStorage.setItem("notes", notes);
-  }, [notes]);
-
-  useEffect(() => {
-    if (!hidden) inputRef.current?.focus();
-  }, [hidden]);
-
-  useEffect(() => {
-    document.title = "New tab";
     function onHide(event) {
       if (event.key === "Escape") {
         event.preventDefault();
@@ -933,113 +1194,12 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const color = hidden ? "#1b1f27" : "#000";
+    const color = hidden ? "#1b1f27" : "#1c1c1e";
     document.body.style.background = color;
     document.documentElement.style.background = color;
   }, [hidden]);
 
-  async function send() {
-    const text = message.trim();
-    if (!text || loading) return;
-
-    setLoading(true);
-    setError("");
-    setOutput("");
-    setCopied(false);
-    setMessage("");
-
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notes, message: text }),
-      });
-
-      if (!res.ok) {
-        let detail = "Request failed";
-        try {
-          const data = await res.json();
-          detail = data.error || detail;
-        } catch {
-          detail = await res.text();
-        }
-        throw new Error(detail);
-      }
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let result = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        result += decoder.decode(value, { stream: true });
-        setOutput(result);
-      }
-      result += decoder.decode();
-      setOutput(result);
-      if (result.trim()) {
-        try {
-          await navigator.clipboard.writeText(result);
-          setCopied(true);
-          setTimeout(() => {
-            setCopied(false);
-            setHidden(true);
-          }, 500);
-        } catch {
-          setCopied(false);
-        }
-      }
-    } catch (err) {
-      setError(err.message || "Something went wrong");
-    } finally {
-      setLoading(false);
-      inputRef.current?.focus();
-    }
-  }
-
-  function onKeyDown(event) {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-      send();
-    }
-  }
-
-  async function copyAll() {
-    if (!output) return;
-    await navigator.clipboard.writeText(output);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1000);
-  }
-
   if (hidden) return <NewTab notes={notes} pdfOpen={pdfOpen} lastAnswer={output} />;
 
-  return (
-    <div className="page">
-      <textarea
-        className="notes"
-        value={notes}
-        onChange={(event) => setNotes(event.target.value)}
-        placeholder="notes"
-        spellCheck={false}
-      />
-      <pre className="output">
-        {error ? error : output || (loading ? "..." : "answers")}
-      </pre>
-      {output && !error && (
-        <button type="button" className="copy" onClick={copyAll}>
-          {copied ? "copied" : "copy"}
-        </button>
-      )}
-      <textarea
-        ref={inputRef}
-        className="chat"
-        value={message}
-        onChange={(event) => setMessage(event.target.value)}
-        onKeyDown={onKeyDown}
-        placeholder="questions"
-        spellCheck={false}
-      />
-    </div>
-  );
+  return <SafariStart notes={notes} lastAnswer={output} seed={message} />;
 }
