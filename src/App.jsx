@@ -271,32 +271,46 @@ function NewsCard({ item }) {
 }
 
 async function solveToClipboard(notes, message, image) {
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ notes, message, image }),
-  });
-  if (!res.ok) {
-    let detail = "Request failed";
-    try {
-      const data = await res.json();
-      detail = data.error || detail;
-    } catch {
-      detail = await res.text();
+  const payload = JSON.stringify({ notes, message, image });
+  let lastDetail = "Server busy. Wait a few seconds and try again.";
+  for (let attempt = 0; attempt < 4; attempt++) {
+    if (attempt > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 2000 + attempt * 1500));
     }
-    throw new Error(detail);
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: payload,
+    });
+    if (!res.ok) {
+      let detail = lastDetail;
+      try {
+        const data = await res.json();
+        detail = data.error || detail;
+      } catch {
+        const text = await res.text();
+        if (text && !text.includes("{")) detail = text;
+      }
+      if (/rate_limit|groq|invalid_request/i.test(detail) || detail.includes('{"error"')) {
+        detail = lastDetail;
+      }
+      lastDetail = detail;
+      if (res.status === 503 || res.status === 429) continue;
+      throw new Error(lastDetail);
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let result = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      result += decoder.decode(value, { stream: true });
+    }
+    result += decoder.decode();
+    if (result.trim()) await navigator.clipboard.writeText(result);
+    return result;
   }
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let result = "";
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    result += decoder.decode(value, { stream: true });
-  }
-  result += decoder.decode();
-  if (result.trim()) await navigator.clipboard.writeText(result);
-  return result;
+  throw new Error(lastDetail);
 }
 
 async function fileToJpegDataUrl(file) {
